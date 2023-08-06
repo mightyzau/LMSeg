@@ -1,0 +1,15 @@
+DATASETS:
+    TEST: ("mapillary_vistas_sem_seg_val",)
+
+INPUT:
+    MIN_SIZE_TEST: 2048
+    MAX_SIZE_TEST: 2048
+    SIZE_DIVISIBILITY: 1280  
+    FORMAT: "RGB"
+TEST:
+  EVAL_PERIOD: 2000
+  AUG:
+    ENABLED: True
+    MIN_SIZES: [1024, 2048, 3072] 
+    MAX_SIZE: 3072 
+    FLIP: True

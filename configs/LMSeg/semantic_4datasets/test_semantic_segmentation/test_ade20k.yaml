@@ -1,0 +1,16 @@
+DATASETS:
+    TEST: ("ade20k_sem_seg_val",)
+
+## test setting ade20k
+INPUT:
+    MIN_SIZE_TEST: 512
+    MAX_SIZE_TEST: 2048
+    SIZE_DIVISIBILITY: 512  # used in dataset mapper
+    FORMAT: "RGB"
+TEST:
+    EVAL_PERIOD: 2000
+    AUG:
+        ENABLED: True
+        MIN_SIZES: [256, 384, 512, 640, 768, 896]
+        MAX_SIZE: 3584
+        FLIP: True

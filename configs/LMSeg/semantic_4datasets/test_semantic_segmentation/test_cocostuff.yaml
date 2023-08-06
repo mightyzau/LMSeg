@@ -1,0 +1,16 @@
+DATASETS:
+    TEST: ("coco_2017_test_stuff_10k_sem_seg",)
+
+## test setting for cocostuff10k
+INPUT:
+    MIN_SIZE_TEST: 640
+    MAX_SIZE_TEST: 2560
+    SIZE_DIVISIBILITY: 640  # used in dataset mapper
+    FORMAT: "RGB"
+TEST:
+  EVAL_PERIOD: 2000
+  AUG:
+    ENABLED: True
+    MIN_SIZES: [320, 480, 640, 800, 960, 1120]
+    MAX_SIZE: 4480
+    FLIP: True

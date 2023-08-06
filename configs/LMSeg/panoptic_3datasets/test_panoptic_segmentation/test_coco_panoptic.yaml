@@ -1,0 +1,13 @@
+DATASETS:
+    TEST: ("coco_2017_val_panoptic",)
+
+## test setting for coco-panoptic
+INPUT:
+    MIN_SIZE_TEST: 800
+    MAX_SIZE_TEST: 1333
+    FORMAT: "RGB"
+    DATASET_MAPPER_NAME: "detr_panoptic"
+TEST:
+    EVAL_PERIOD: 2000
+    AUG:
+        ENABLED: False

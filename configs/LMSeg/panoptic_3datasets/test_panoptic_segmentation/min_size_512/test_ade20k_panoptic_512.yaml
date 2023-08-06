@@ -1,0 +1,14 @@
+DATASETS:
+    TEST: ("ade20k_panoptic_val",)
+
+
+## test setting for ade20k-panotic
+INPUT:
+    MIN_SIZE_TEST: 512
+    MAX_SIZE_TEST: 2048
+    SIZE_DIVISIBILITY: 512  # used in dataset mapper
+    FORMAT: "RGB"
+TEST:
+    EVAL_PERIOD: 2000
+    AUG:
+        ENABLED: False

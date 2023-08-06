@@ -1,0 +1,168 @@
+LMSEG:
+    TASK_TYPE: "panoptic_segmentation"
+    SAMPLE_STRATEGY: "uniform"
+
+    ENABLE_LEARNABLE_CONTEXT: True
+    ENABLE_CATEGORY_GUIDED_DECODER: True
+
+MODEL:
+    META_ARCHITECTURE: "LMSEG_Panoptic"
+
+    # consistent with clip
+    PIXEL_MEAN: [122.7709383, 116.7460125, 104.09373615000001]
+    PIXEL_STD: [68.5005327, 66.6321579, 70.32316304999999]
+    WEIGHTS: ""
+
+    BACKBONE: 
+        NAME: "D2CLIPResNetWithAttention"
+    CLIP_RESNET:
+        LAYERS: [3, 4, 6, 3]
+        OUTPUT_DIM: 1024
+        INPUT_RESOLUTION: 512
+        WIDTH: 64
+        WITH_ATTNPOOL: True
+        OUT_FEATURES: ["res2", "res3", "res4", "res5"]
+        PRETRAINED: "clip_pretrained/RN50.pt"
+        NORM: 'FrozenBN'        # following maskformer, using frozen bn
+    
+    TEXTENCODER:
+        NAME: "CLIPTextContextEncoder"
+        TOKEN_EMBED_DIM: 512
+        TEXT_DIM: 1024
+        HARD_PROMPT_LENGTH: 10
+
+        CLIPTextContextEncoder:
+            PRETRAINED: "clip_pretrained/RN50.pt"
+            CONTEXT_LENGTH: 18                  # learnable length is 8
+            EMBED_DIM: 1024
+            TRANSFORMER_WIDTH: 512
+            TRANSFORMER_HEADS: 8
+            TRANSFORMER_LAYERS: 12
+
+    SEM_SEG_HEAD:
+        NAME: "LMSegHead"
+        IN_FEATURES: ["res2", "res3", "res4", "res5"]
+        IGNORE_VALUE: 255
+        COMMON_STRIDE: 4    # not used, hard-coded
+        LOSS_WEIGHT: 1.0
+        CONVS_DIM: 256
+        MASK_DIM: 256
+        NORM: "GN"
+        PIXEL_DECODER_NAME: "TransformerEncoderPixelDecoder"
+        TRANSFORMER_ENC_LAYERS: 6
+
+    MASK_FORMER:
+        TRANSFORMER_IN_FEATURE: "transformer_encoder"
+        DEEP_SUPERVISION: True
+        NO_OBJECT_WEIGHT: 0.1
+        DICE_WEIGHT: 1.0
+        MASK_WEIGHT: 20.0
+        HIDDEN_DIM: 256
+        NUM_OBJECT_QUERIES: 100
+        NHEADS: 8
+        DROPOUT: 0.1
+        DIM_FEEDFORWARD: 2048
+        ENC_LAYERS: 0
+        DEC_LAYERS: 6
+        PRE_NORM: False
+
+        TEST_ADE20K_PANOPTIC:
+            PANOPTIC_ON: True
+            OVERLAP_THRESHOLD: 0.8
+            OBJECT_MASK_THRESHOLD: 0.7
+        
+        TEST_CITYSCAPES_PANOPTIC:
+            PANOPTIC_ON: True
+            OVERLAP_THRESHOLD: 0.8
+            OBJECT_MASK_THRESHOLD: 0.8
+        
+        SIZE_DIVISIBILITY_COCO_PANOPTIC: 0      # COCO model should not pad image
+        TEST_COCO_PANOPTIC:
+            PANOPTIC_ON: True
+            OVERLAP_THRESHOLD: 0.8
+            OBJECT_MASK_THRESHOLD: 0.8
+        
+
+SOLVER:
+    IMS_PER_BATCH: 16
+    BASE_LR: 0.0001
+    MAX_ITER: 160000
+    WARMUP_FACTOR: 1.0
+    WARMUP_ITERS: 0
+    WEIGHT_DECAY: 0.0001
+    OPTIMIZER: "ADAMW"
+    LR_SCHEDULER_NAME: "WarmupPolyLR"
+    BACKBONE_MULTIPLIER: 0.1
+    CLIP_GRADIENTS:
+        ENABLED: True
+        CLIP_TYPE: "full_model"
+        CLIP_VALUE: 0.01
+        NORM_TYPE: 2.0
+
+    TEXTENCODER_MULTIPLIER: 0.0
+
+DATALOADER:
+    FILTER_EMPTY_ANNOTATIONS: True
+    NUM_WORKERS: 2
+VERSION: 2
+
+
+DATASETS:
+    TRAIN: ("ade20k_panoptic_train", "cityscapes_fine_panoptic_train", "coco_2017_train_panoptic")
+    TEST: ("ade20k_panoptic_val",)
+
+
+## test setting for ade20k-panotic
+INPUT:
+    MIN_SIZE_TEST: 640
+    MAX_SIZE_TEST: 2560
+    SIZE_DIVISIBILITY: 640  # used in dataset mapper
+    FORMAT: "RGB"
+TEST:
+    EVAL_PERIOD: 10000000   # not eval
+    AUG:
+        ENABLED: False
+
+
+INPUT_ADE20K_PANOPTIC:
+    MIN_SIZE_TRAIN: !!python/object/apply:eval ["[int(x * 0.1 * 640) for x in range(5, 21)]"]
+    MIN_SIZE_TRAIN_SAMPLING: "choice"
+    MIN_SIZE_TEST: 640
+    MAX_SIZE_TRAIN: 2560
+    MAX_SIZE_TEST: 2560
+    CROP:
+        ENABLED: True
+        TYPE: "absolute"
+        SIZE: (640, 640)
+        SINGLE_CATEGORY_MAX_AREA: 1.0
+    COLOR_AUG_SSD: True
+    SIZE_DIVISIBILITY: 640  # used in dataset mapper
+    FORMAT: "RGB"
+
+
+INPUT_CITYSCAPES_PANOPTIC:
+    MIN_SIZE_TRAIN: !!python/object/apply:eval ["[int(x * 0.1 * 1024) for x in range(5, 21)]"]
+    MIN_SIZE_TRAIN_SAMPLING: "choice"
+    MIN_SIZE_TEST: 1024
+    MAX_SIZE_TRAIN: 4096
+    MAX_SIZE_TEST: 2048
+    CROP:
+        ENABLED: True
+        TYPE: "absolute"
+        SIZE: (512, 1024)
+        SINGLE_CATEGORY_MAX_AREA: 1.0
+    COLOR_AUG_SSD: True
+    SIZE_DIVISIBILITY: -1
+    FORMAT: "RGB"
+
+INPUT_COCO_PANOPTIC:
+    MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
+    MAX_SIZE_TRAIN: 1333
+    MIN_SIZE_TEST: 800
+    MAX_SIZE_TEST: 1333
+    CROP:
+        ENABLED: True
+        TYPE: "absolute_range"
+        SIZE: (384, 600)
+    FORMAT: "RGB"
+    

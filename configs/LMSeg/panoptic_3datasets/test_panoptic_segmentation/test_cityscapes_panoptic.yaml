@@ -1,0 +1,14 @@
+DATASETS:
+    TEST: ("cityscapes_fine_panoptic_val",)
+
+INPUT:
+    MIN_SIZE_TEST: 1024
+    MAX_SIZE_TEST: 2048
+    SIZE_DIVISIBILITY: -1
+TEST:
+    EVAL_PERIOD: 1000000
+    AUG:
+        ENABLED: False
+        MIN_SIZES: [512, 768, 1024, 1280, 1536, 1792]
+        MAX_SIZE: 4096
+        FLIP: True
